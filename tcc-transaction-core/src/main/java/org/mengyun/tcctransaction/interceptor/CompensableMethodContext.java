@@ -84,6 +84,18 @@ public class CompensableMethodContext {
         return method;
     }
 
+    /**
+     * 计算方法类型，根据不同方法类型，做不同的事务处理
+     * 1. 方法类型为 MethodType.ROOT 时，发起根事务，判断条件如下二选一：
+     * 1.1 事务传播级别为 Propagation.REQUIRED，并且当前没有事务。
+     * 1.2 事务传播级别为 Propagation.REQUIRES_NEW，新建事务，如果当前存在事务，把当前事务挂起。此时，事务管理器的当前线程事务队列可能会存在多个事务。
+     * 2. 方法类型为 MethodType.ROOT 时，发起分支事务，判断条件如下二选一：
+     * 2.1 事务传播级别为 Propagation.REQUIRED，并且当前不存在事务，并且方法参数传递了事务上下文
+     * 2.2 事务传播级别为 Propagation.MANDATORY，并且当前不存在事务，并且方法参数传递了事务上下文
+     * 3. 方法类型为 MethodType.Normal 时，不进行事务处理。
+     * @param isTransactionActive 是否事务开启
+     * @return
+     */
     public MethodRole getMethodRole(boolean isTransactionActive) {
         if ((propagation.equals(Propagation.REQUIRED) && !isTransactionActive && transactionContext == null) ||
                 propagation.equals(Propagation.REQUIRES_NEW)) {

@@ -5,15 +5,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 事务上下文
  * Created by changmingxie on 10/30/15.
  */
 public class TransactionContext implements Serializable {
 
     private static final long serialVersionUID = -8199390103169700387L;
+    //事务ID
     private TransactionXid xid;
-
+    //事务当前状态
     private int status;
-
+    //事务附加的参数
     private Map<String, String> attachments = new ConcurrentHashMap<String, String>();
 
     public TransactionContext() {

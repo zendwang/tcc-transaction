@@ -15,43 +15,73 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 事务
  * Created by changmingxie on 10/26/15.
  */
 public class Transaction implements Serializable {
 
     private static final long serialVersionUID = 7291423944314337931L;
-
+    /**
+     * 事务编号
+     */
     private TransactionXid xid;
-
+    /**
+     * 事务状态
+     */
     private TransactionStatus status;
-
+    /**
+     * 事务类型
+     */
     private TransactionType transactionType;
-
+    /**
+     * 重试次数
+     */
     private volatile int retriedCount = 0;
-
+    /**
+     * 创建时间
+     */
     private Date createTime = new Date();
-
+    /**
+     * 最后更新时间
+     */
     private Date lastUpdateTime = new Date();
-
+    /**
+     * 版本号
+     */
     private long version = 1;
-
+    /**
+     * 参与者集合
+     */
     private List<Participant> participants = new ArrayList<Participant>();
-
+    /**
+     * 附带属性映射
+     */
     private Map<String, Object> attachments = new ConcurrentHashMap<String, Object>();
 
     public Transaction() {
 
     }
 
+    /**
+     * 创建 分支事务
+     * 该构成方法一般会在分支事务端被调用，用于根据
+     * 从根事务端传递过来的事务上下文中创建一个分支事务
+      * @param transactionContext
+     */
     public Transaction(TransactionContext transactionContext) {
-        this.xid = transactionContext.getXid();
-        this.status = TransactionStatus.TRYING;
-        this.transactionType = TransactionType.BRANCH;
+        this.xid = transactionContext.getXid(); // 事务上下文的 xid
+        this.status = TransactionStatus.TRYING; //尝试中状态
+        this.transactionType = TransactionType.BRANCH;//分支事务
     }
 
+    /**
+     * 创建指定类型的事务
+     * 该构造方法通常会在根事务端被调用
+     * @param transactionType 事务类型
+     */
     public Transaction(TransactionType transactionType) {
         this.xid = new TransactionXid();
-        this.status = TransactionStatus.TRYING;
+        this.status = TransactionStatus.TRYING;//尝试中状态
         this.transactionType = transactionType;
     }
 
@@ -61,7 +91,9 @@ public class Transaction implements Serializable {
         this.status = TransactionStatus.TRYING;
         this.transactionType = transactionType;
     }
-
+    /**
+     * 添加参与者
+     */
     public void enlistParticipant(Participant participant) {
         participants.add(participant);
     }
@@ -88,14 +120,19 @@ public class Transaction implements Serializable {
         this.status = status;
     }
 
-
+    /**
+     * 提交 TCC 事务
+     */
     public void commit() {
-
+        // 遍历所有参与者
         for (Participant participant : participants) {
+            // 调用所有参与者的commit，这个参与者有本地参与者也有远程参与者
             participant.commit();
         }
     }
-
+    /**
+     * 回滚 TCC 事务
+     */
     public void rollback() {
         for (Participant participant : participants) {
             participant.rollback();
